@@ -7,12 +7,17 @@ import { JwtModule } from '@nestjs/jwt';
 import { jwtConstants } from '../../constants';
 import { JwtStrategy } from './jwtStrategy.service';
 import { SharedModule } from "../shared/shared.module";
+import { CustomerModule } from "../customerModule/customer.module";
+import { CustomerService } from "../customerModule/Customer.service";
+import { Customer } from "src/entities/customer.entity";
+import { EmailLogModule } from "../emailLogModule/email.log.module";
 
 
 @Module({
     imports: [
         UserModule, 
         SharedModule,
+        EmailLogModule,
         PassportModule.register({      
             defaultStrategy: 'jwt',      
             property: 'user',      
@@ -21,7 +26,8 @@ import { SharedModule } from "../shared/shared.module";
         JwtModule.register({
             secret: jwtConstants.secret,
             signOptions: { expiresIn: '5h' }
-        })
+        }),
+        CustomerModule
     ],
     controllers: [ AuthController ],
     providers: [ { provide: "IAuthService", useClass: AuthService }, JwtStrategy ],

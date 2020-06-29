@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { Account } from './entities/account.entity';
-import { AccountType } from './entities/accountType.entity';
 import { Dictionary } from './entities/dictionary.entity';
 import { DictionaryDetail } from './entities/dictionaryDetail.entity';
+import { Customer } from './entities/customer.entity';
+import { Address } from './entities/address.entity';
+import { EmailLog } from './entities/email.log.entity';
 
 @Injectable()
 export class dbConnectService implements TypeOrmOptionsFactory {
@@ -12,20 +13,21 @@ export class dbConnectService implements TypeOrmOptionsFactory {
         return {
             name: 'default',
             type: 'mysql',
-            host: process.env.DATABASE_HOST,
+            host: 'localhost',
             port: Number(process.env.DATABASE_PORT),
-            username: process.env.DATABASE_USERNAME,
-            password: process.env.DATABASE_PASSWORD,
-            database: process.env.DATABASE_NAME,
-            synchronize: Boolean(process.env.DATABASE_SYNCHRONIZE),
+            username: 'root',
+            password: null,
+            database: 'test',
+            synchronize: true,
             dropSchema: false,
-            logging: Boolean(process.env.DATABASE_LOGGING),
+            logging: true,
             entities: [
                 User,
-                Account,
-                AccountType,
                 Dictionary,
-                DictionaryDetail
+                Address,
+                Customer,
+                DictionaryDetail,
+                EmailLog
             ]
         };
     }

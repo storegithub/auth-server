@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 
 import { HttpExceptionFilter } from './http-exception.filter';
-import { LoggingInterceptor } from './logging.interceptor'; ;
+import { LoggingInterceptor } from './logging.interceptor';import { NotificationService } from './notification.service';
+import { MailerService } from '@nestjs-modules/mailer';
+ ;
 
 @Module({
   imports: [],
@@ -15,7 +17,10 @@ import { LoggingInterceptor } from './logging.interceptor'; ;
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
     },
+    NotificationService
   ],
-  exports: [],
+  exports: [
+    NotificationService,
+  ],
 })
 export class SharedModule {}

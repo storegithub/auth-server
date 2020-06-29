@@ -1,5 +1,5 @@
-import { Injectable, BadRequestException, NotImplementedException, Inject, UnauthorizedException, HttpException, HttpStatus } from '@nestjs/common'; 
-import { UserDto, UserLiteDto } from 'src/models/user.dto';
+import { Injectable, BadRequestException, NotImplementedException, Inject, UnauthorizedException, HttpException, HttpStatus, Param } from '@nestjs/common'; 
+import { UserDto, UserLiteDto, RegisterUserDto } from 'src/models/user.dto';
 import { ApiResponse } from 'src/models/response.class';
 import { isNullOrUndefined } from 'util';
 import { InjectMapper, AutoMapper } from 'nestjsx-automapper';
@@ -10,11 +10,12 @@ import { OperationResult } from 'src/models/operation.result.dto';
 import { ExceptionHandler } from 'src/generics/exception.handler';
 import { sign } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import { NotificationService } from '../shared/notification.service';
 
 export interface IAuthService
 {
     login({ userName, password } : Credentials): Promise<UserLiteDto>;
-    register(uer: UserDto);
+    register(uer: RegisterUserDto);
     hashPassword(password: string): string; 
     comparePasswords(newPassword: string, passwordHash: string): string;
 }
@@ -28,28 +29,35 @@ export class AuthService implements IAuthService {
     constructor(
         @Inject('IUserService') userService: IUserService,
         @InjectMapper() mapper: AutoMapper,
-        jwtService: JwtService)
+        jwtService: JwtService,
+        private readonly notificationService: NotificationService)
     {
         this.mapper = mapper;
         this.userService = userService;
         this.jwtService = jwtService;
     }
  
-    async login({ userName, password } : Credentials): Promise<UserLiteDto> {
+    public async login({ userName, password } : Credentials): Promise<UserLiteDto> {
         const user: UserDto = await this.userService.findActiveOne(userName);
-        if (!isNullOrUndefined(user) && user.password === password)
+        const hashPassword: string = this.hashPassword(password);
+
+        if (!isNullOrUndefined(user) && this.comparePasswords(user.password , hashPassword))
             return await this.getLiteInfo(user);
         
         throw new UnauthorizedException();
     }
 
-    async register(user: UserDto)
+    public async register(user: RegisterUserDto)
     {
+        if(user.password != user.confirmPassword)
+            throw new Error();
+
         const { userName } = user;
         let appUser: UserDto =  await this.userService.findOne(userName);
         if(!isNullOrUndefined(appUser))
             throw new Error();
-
+        
+        user.password = this.hashPassword(user.password);
         const result: OperationResult<UserDto> = await this.userService.insert(user);
         if (!result.success)
             throw new Error();
@@ -64,7 +72,7 @@ export class AuthService implements IAuthService {
             throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);    
         }    
         return user;  
-    }
+    }    
 
 
     private async getLiteInfo(user: UserDto): Promise<UserLiteDto>

@@ -21,6 +21,29 @@ export class UserDto
     }
 }
 
+export class RegisterUserDto
+{
+    public id?: number;
+
+    @IsString()
+    public userName: string;
+
+    @IsString()
+    public email: string;
+
+    @IsString()
+    public password: string;
+    @IsString()
+    public confirmPassword: string;
+
+    public active: boolean;
+
+    public toJson(): string
+    {
+        return JSON.stringify(this);
+    }
+}
+
 
 export class UserLiteDto 
 {

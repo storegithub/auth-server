@@ -9,6 +9,10 @@ import { AutomapperModule } from 'nestjsx-automapper';
 import './mappings/source.profile';
 import { UserModule } from './modules/userModule/user.module';
 import { SharedModule } from './modules/shared/shared.module';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
+import { CustomerModule } from './modules/customerModule/customer.module';
+import { EmailLogModule } from './modules/emailLogModule/email.log.module';
 
 @Module({
   imports: [ 
@@ -16,7 +20,24 @@ import { SharedModule } from './modules/shared/shared.module';
     AutomapperModule.withMapper(),
     AuthModule,
     UserModule, 
-    SharedModule
+    SharedModule,
+    CustomerModule,
+    EmailLogModule,
+    MailerModule.forRootAsync({ 
+      useFactory: () => ({
+        transport: 'smtps://replayn.homebank@gmail.com:1Asdfghj@smtp.gmail.com',
+        defaults: {
+          from:'"nest-modules" modules@nestjs.com',
+        },
+        template: {
+          dir: __dirname + '/templates',
+          adapter: new PugAdapter(),
+          options: {
+            strict: true,
+          },
+        },
+      }) 
+    })
   ]
 })
 export class AppModule {}
