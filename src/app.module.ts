@@ -13,6 +13,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 import { CustomerModule } from './modules/customerModule/customer.module';
 import { EmailLogModule } from './modules/emailLogModule/email.log.module';
+import { DictionaryModule } from './modules/dictionaryModule/dictionary.module';
 
 @Module({
   imports: [ 
@@ -23,6 +24,7 @@ import { EmailLogModule } from './modules/emailLogModule/email.log.module';
     SharedModule,
     CustomerModule,
     EmailLogModule,
+    DictionaryModule,
     MailerModule.forRootAsync({ 
       useFactory: () => ({
         transport: 'smtps://replayn.homebank@gmail.com:1Asdfghj@smtp.gmail.com',

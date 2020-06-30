@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, ValidationPipe, Request, UseGuards, Inject } from '@nestjs/common';
+import { Controller, Post, Body, Get, ValidationPipe, Request, UseGuards, Inject, Param, Put } from '@nestjs/common';
 import { IAuthService } from './auth.service';
 import { Credentials } from '../../models/credentials.dto';
 import { UserDto, RegisterUserDto } from 'src/models/user.dto';
@@ -11,6 +11,7 @@ import { IEmailLogService } from '../emailLogModule/email.log.service';
 import { NotificationService } from '../shared/notification.service';
 import { SelectItem } from 'src/models/selectitem';
 import { CodeConfirmation } from 'src/models/codeconfirmation';
+import { IProfile, Profile } from 'src/models/profile.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -83,4 +84,26 @@ export class AuthController {
         
         return new ApiResponse(isValid, isValid == true ? "ok" : "does not exist");
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('profile/:userId')
+    public async getProfile(@Param('userId') userId: number): Promise<IProfile>
+    {
+        return await this.authService.myProfile(userId);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Put()
+    public async updateProfile(@Body() profile: Profile): Promise<IProfile>
+    {
+       try
+       {
+            const data: IProfile = await this.authService.updateProfile(profile);
+            return data;
+       }
+       catch(err)
+       {
+            return new Profile();
+       }
+    } 
 }

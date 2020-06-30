@@ -77,7 +77,22 @@ export class UserService extends BaseService<User, UserDto> implements IUserServ
         return user;
     }
 
+    public onBeforeUpdate(dto: UserDto): User
+    {
+        const value: User = new User();
+        value.email = dto.email;
+        value.id = dto.id;
+        if(dto.password != null)
+            value.password = dto.password;
+        return value;
+    }
+
     public onAfterInsert(entity: User): UserDto
+    {
+        return this.MapDto(entity);
+    }
+
+    public onAfterUpdate(entity: User): UserDto
     {
         return this.MapDto(entity);
     }

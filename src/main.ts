@@ -18,6 +18,7 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('api', app, document);
+  app.enableCors();
   // app.setGlobalPrefix(Constants.GLOBAL_PREFIX);
   await app.listen(PORT);
   Logger.log(`Server running on http://localhost:${PORT}/${Constants.GLOBAL_PREFIX}`);

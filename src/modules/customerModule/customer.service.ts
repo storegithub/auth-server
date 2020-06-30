@@ -5,8 +5,7 @@ import { Injectable } from "@nestjs/common";
 import { Customer } from "src/entities/customer.entity";
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
-import { InjectMapper, AutoMapper } from "nestjsx-automapper";
-import { ExceptionHandler } from "src/generics/exception.handler";
+import { InjectMapper, AutoMapper } from "nestjsx-automapper"; 
 
 export interface ICustomerService extends IService<CustomerDto>
 {
@@ -35,6 +34,21 @@ export class CustomerService extends BaseService<Customer, CustomerDto> implemen
         } 
     }
 
+    public async getById(id: number): Promise<CustomerDto>
+    {
+        let item: CustomerDto = null;
+        try
+        {
+            const entity: Customer = await this.repository.findOne({ where: { id: id }, relations: ["branch", "address"] });
+
+            item = this.MapDto(entity);
+        }
+        catch(error)
+        {
+            console.log(error);
+        }
+        return item;
+    }
     
     public MapDto(entity: Customer): CustomerDto
     {
@@ -64,7 +78,27 @@ export class CustomerService extends BaseService<Customer, CustomerDto> implemen
         return value;
     }
 
+    public onBeforeUpdate(dto: CustomerDto): Customer
+    {
+        const value: Customer = new Customer();
+        value.id = dto.id;
+        value.details = dto.details;
+        value.email = dto.email;
+        value.gender = dto.gender;
+        value.name = dto.name;
+        value.number = dto.number;
+        value.phoneNo = dto.phoneNo;
+        value.series = dto.series;
+        value.surname = dto.surname;
+        return value;
+    }
+
     public onAfterInsert(entity: Customer): CustomerDto
+    {
+        return this.MapDto(entity);
+    }
+
+    public onAfterUpdate(entity: Customer): CustomerDto
     {
         return this.MapDto(entity);
     }

@@ -33,7 +33,7 @@ export class BaseService<Tentity extends object & IId, Tdto extends object> exte
         let item: Tdto = null;
         try
         {
-            const entity: Tentity = await this.repository.findOne(id);
+            const entity: Tentity = await this.repository.findOne({ where: { id: id } });
 
             item = this.MapDto(entity);
         }

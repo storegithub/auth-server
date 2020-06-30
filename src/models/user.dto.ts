@@ -19,6 +19,8 @@ export class UserDto
     {
         return JSON.stringify(this);
     }
+
+    public customerId?: number;
 }
 
 export class RegisterUserDto
@@ -51,4 +53,9 @@ export class UserLiteDto
     public userName: string;
     public email: string;
     public token: string;
+
+    public firstName: string;
+    public lastName: string;
+
+    public success: boolean;
 }

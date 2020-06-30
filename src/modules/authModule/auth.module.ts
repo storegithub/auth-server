@@ -11,6 +11,8 @@ import { CustomerModule } from "../customerModule/customer.module";
 import { CustomerService } from "../customerModule/Customer.service";
 import { Customer } from "src/entities/customer.entity";
 import { EmailLogModule } from "../emailLogModule/email.log.module";
+import { DictionaryModule } from "../dictionaryModule/dictionary.module";
+import { AddressModule } from "../addressModule/address.module";
 
 
 @Module({
@@ -18,6 +20,9 @@ import { EmailLogModule } from "../emailLogModule/email.log.module";
         UserModule, 
         SharedModule,
         EmailLogModule,
+        DictionaryModule,
+        AddressModule,
+        CustomerModule,
         PassportModule.register({      
             defaultStrategy: 'jwt',      
             property: 'user',      

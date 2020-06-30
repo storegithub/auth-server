@@ -6,6 +6,8 @@ import { DictionaryDetail } from './entities/dictionaryDetail.entity';
 import { Customer } from './entities/customer.entity';
 import { Address } from './entities/address.entity';
 import { EmailLog } from './entities/email.log.entity';
+import { Bank } from './entities/bank.entity';
+import { Branch } from './entities/branch.entity';
 
 @Injectable()
 export class dbConnectService implements TypeOrmOptionsFactory {
@@ -27,7 +29,9 @@ export class dbConnectService implements TypeOrmOptionsFactory {
                 Address,
                 Customer,
                 DictionaryDetail,
-                EmailLog
+                EmailLog,
+                Bank,
+                Branch
             ]
         };
     }
