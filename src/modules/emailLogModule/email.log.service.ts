@@ -6,11 +6,15 @@ import { Repository } from "typeorm";
 import { InjectMapper, AutoMapper } from "nestjsx-automapper";
 import { EmailLogDto } from "src/models/email.log.dto";
 import { Guid } from "guid-typescript";
+import { isNullOrUndefined } from "util";
 
 export interface IEmailLogService extends IService<EmailLogDto>
 {
-    validateCode(code: string): Promise<boolean>;
-    generateCode(): Promise<string>;
+    validateCode(action: string, email: string): Promise<boolean>;
+    generateCode(action: string, email: string): Promise<string>;
+    
+    getByGuid(guid: string): Promise<any>;
+    generateGuid(action: string, email: string): Promise<string>;
 
 }
 
@@ -22,22 +26,26 @@ export class EmailLogService extends BaseService<EmailLog, EmailLogDto> implemen
         super(repository, mapper);
     }
 
-    public async validateCode(code: string): Promise<boolean>
+    public async validateCode(code: string, email: string): Promise<boolean>
     {
-        const item: EmailLog = await this.repository.findOne({ where: { code : code } });
+        const item: EmailLog = await this.repository.findOne({ where: { code : code, email: email } });
         const currentDate: Date = new Date();
         const diff: number = (currentDate.getTime() - item.createdOn.getTime()) / 1000;
-        return (diff > 65 || diff < 0) ? false : true;
+        return (diff > 120 || diff < 0) ? false : true;
     }
 
-    public async generateCode(): Promise<string>
+    public async generateCode(action: string, email: string): Promise<string>
     {
         try
         {
+            if (isNullOrUndefined(action))
+                throw new Error();
             const item: EmailLog = new EmailLog();
             item.code = this.randomCode();
             item.createdOn = new Date();
+            item.action = action;
             item.guid = Guid.create().toString();
+            item.email = email;
 
             await this.repository.insert(item);
 
@@ -47,6 +55,34 @@ export class EmailLogService extends BaseService<EmailLog, EmailLogDto> implemen
         {
             return null;
         } 
+    }
+
+    public async generateGuid(action: string, email: string): Promise<string>
+    {
+        try
+        {
+            if (isNullOrUndefined(action))
+                throw new Error();
+            const item: EmailLog = new EmailLog();
+            item.code = this.randomCode();
+            item.createdOn = new Date();
+            item.action = action;
+            item.guid = Guid.create().toString();
+            item.email = email;
+
+            await this.repository.insert(item);
+
+            return item.guid;
+        }
+        catch(err)
+        {
+            return null;
+        } 
+    }
+
+    public async getByGuid(guid: string): Promise<any>
+    {
+        return this.repository.findOne({ where: { guid: guid } });
     }
 
     public randomCode(): string

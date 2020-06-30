@@ -9,12 +9,17 @@ export class EmailLog implements IId
     @PrimaryGeneratedColumn({ name: 'Id'})
     public id: number;
 
-    
     @Column({ name: 'Guid' })
     public guid: string;
 
     @Column({ name: 'Code' })
     public code: string;
+
+    @Column({ name: 'Action' })
+    public action: string;
+
+    @Column({ name: 'Email' })
+    public email: string;
 
     @Column({ name: 'CreatedOn' })
     public createdOn: Date;

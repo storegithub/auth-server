@@ -13,7 +13,9 @@ import { OperationResult } from "src/models/operation.result.dto";
 export interface IUserService extends IService<UserDto> 
 {
     findOne(userName: string): Promise<UserDto>;
+    findOneByEmail(email: string): Promise<UserDto>;
     findActiveOne(userName: string): Promise<UserDto>;
+    SetActiveByEmail(email: string): Promise<any>;
 }
 
 @Injectable()
@@ -49,6 +51,27 @@ export class UserService extends BaseService<User, UserDto> implements IUserServ
         return result[0];
     }
 
+    public async findOneByEmail(email: string): Promise<UserDto>
+    {
+        if (isNullOrUndefined(email))
+            throw new BadRequestException("Invalid credentials!");
+
+        const result: User = await this.repository.findOne({ where: { email: email, active: true } });
+        
+        return this.MapDto(result);
+    }
+     
+    public async SetActiveByEmail(email: string): Promise<any>
+    {
+        if (isNullOrUndefined(email))
+            throw new BadRequestException("Invalid credentials!");
+
+        const result: User = await this.repository.findOne({ where: { email: email } });
+        result.active = true;
+
+        await this.repository.update(result.id, result);
+    }
+
     public MapDto(entity: User): UserDto
     {
         return this.mapper.map(entity, UserDto, User);
@@ -72,7 +95,13 @@ export class UserService extends BaseService<User, UserDto> implements IUserServ
     public onBeforeInsert(dto: UserDto): User
     {
         const user: User = this.mapper.map(dto, User, UserDto);
+        
         user.id = 0;
+        user.active = false;
+        user.customerId = dto.customerId;
+        user.email = dto.email;
+        user.password = dto.password;
+        user.userName = dto.userName;
 
         return user;
     }

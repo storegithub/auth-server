@@ -20,6 +20,7 @@ import { IDictionaryDetailService } from '../dictionaryModule/dictionaryDetail.s
 import { DictionaryDetailDto } from 'src/models/dictionaryDetail.dto';
 import { SelectItem } from 'src/models/selectitem';
 import { Md5 } from 'ts-md5/dist/md5'
+import { IEmailLogService } from '../emailLogModule/email.log.service';
 
 export interface IAuthService
 {
@@ -29,6 +30,7 @@ export interface IAuthService
     hashPassword(password: string, username: string): string; 
     comparePasswords(username: string, password: string, passwordHash: string): boolean;
     updateProfile(profile: Profile): Promise<IProfile>;
+    validateAccount(data: string):  Promise<any>;
 }
 
 @Injectable()
@@ -40,6 +42,7 @@ export class AuthService implements IAuthService {
 
      private readonly customerService: ICustomerService;
      private readonly dictionaryDetailService: IDictionaryDetailService;
+     private readonly emailLoggerService: IEmailLogService;
 
     constructor(
         @Inject('IUserService') userService: IUserService,
@@ -48,6 +51,7 @@ export class AuthService implements IAuthService {
         @Inject('IDictionaryDetailService') dictionaryDetailService: IDictionaryDetailService,
         @InjectMapper() mapper: AutoMapper,
         jwtService: JwtService,
+        @Inject("IEmailLogService") emailLoggerService: IEmailLogService,
         private readonly notificationService: NotificationService)
     {
         this.mapper = mapper;
@@ -56,6 +60,7 @@ export class AuthService implements IAuthService {
         this.customerService = customerService;
         this.addressService = addressService;
         this.dictionaryDetailService = dictionaryDetailService;
+        this.emailLoggerService = emailLoggerService;
     }
 
     public async myProfile(userId: number) :Promise<IProfile>
@@ -169,13 +174,29 @@ export class AuthService implements IAuthService {
         let appUser: UserDto =  await this.userService.findOne(userName);
         if(!isNullOrUndefined(appUser))
             throw new Error();
-        
+
         user.password = this.hashPassword(user.password, user.userName);
-        const result: OperationResult<UserDto> = await this.userService.insert(user);
+
+        const newUser: UserDto = new UserDto();
+        newUser.email = user.email;
+        newUser.password = user.password;
+        newUser.userName = user.userName;
+        const customer: CustomerDto = await this.customerService.getByEmail(user.email);
+        newUser.customerId = customer.id;
+
+        const result: OperationResult<UserDto> = await this.userService.insert(newUser);
         if (!result.success)
             throw new Error();
 
+        const buffer: SelectItem<string, string>[] = [];
+        const codeItem: SelectItem<string, string> = new SelectItem<string, string>();
+        codeItem.value = 'model.code';  
+        codeItem.text = await this.emailLoggerService.generateGuid("confirm.account", user.email);          
+        buffer.push(codeItem);
+
+        this.notificationService.sendRegistration(user, buffer);
         
+            
         return new ApiResponse(true, "Contul a fost inregistrat cu success!");
     }
 
@@ -187,6 +208,12 @@ export class AuthService implements IAuthService {
         return user;  
     }    
 
+    public async validateAccount(data: string): Promise<any>
+    {
+        const { email }  = await this.emailLoggerService.getByGuid(data);
+
+        this.userService.SetActiveByEmail(email);
+    }
 
     private async getLiteInfo(user: UserDto): Promise<UserLiteDto>
     {

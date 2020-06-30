@@ -12,6 +12,7 @@ import { NotificationService } from '../shared/notification.service';
 import { SelectItem } from 'src/models/selectitem';
 import { CodeConfirmation } from 'src/models/codeconfirmation';
 import { IProfile, Profile } from 'src/models/profile.dto';
+import { ICode } from 'src/models/send.code';
 
 @Controller('auth')
 export class AuthController {
@@ -61,15 +62,7 @@ export class AuthController {
             const userDto: UserDto = new UserDto();
             userDto.email = data.email; 
 
-            const buffer: SelectItem<string, string>[] = [];
-            const codeItem: SelectItem<string, string> = new SelectItem<string, string>();
-            codeItem.value = 'model.code';  
-            codeItem.text = await this.emailLoggerService.generateCode();          
-            buffer.push(codeItem);
-
-            await this.notificationService.sendCode(userDto, buffer);
-
-            return new CodeConfirmation(true, "ok", codeItem.text, 60);
+            return new CodeConfirmation(true, "ok", null, 60);
         }
         catch(err)
         {
@@ -77,10 +70,34 @@ export class AuthController {
         }
     }
 
+    @Post('/sendCode')
+    public async sendCode(@Body() model: ICode)
+    {
+        try
+        { 
+            const userDto: UserDto = new UserDto();
+            userDto.email = model.email; 
+
+            const buffer: SelectItem<string, string>[] = [];
+            const codeItem: SelectItem<string, string> = new SelectItem<string, string>();
+            codeItem.value = 'model.code';  
+            codeItem.text = await this.emailLoggerService.generateCode("register", model.email);          
+            buffer.push(codeItem);
+
+            await this.notificationService.sendCode(userDto, buffer);
+
+            return new CodeConfirmation(true, "ok", null, 60);
+        }
+        catch(err)
+        {
+            return new CodeConfirmation(false, err.message, null, -1);
+        } 
+    }
+
     @Post('/checkRegisterCode')
     public async checkRegisterCode(@Body(ValidationPipe) item: CodeValidation): Promise<ApiResponse>
     {
-        const isValid: boolean = await this.emailLoggerService.validateCode(item.code);
+        const isValid: boolean = await this.emailLoggerService.validateCode(item.code, item.email);
         
         return new ApiResponse(isValid, isValid == true ? "ok" : "does not exist");
     }
@@ -106,4 +123,10 @@ export class AuthController {
             return new Profile();
        }
     } 
+
+    @Get('/validateaccount/:data')
+    public async validateAccount(@Param('data') data: string)
+    {
+        return await this.authService.validateAccount(data);
+    }
 }
