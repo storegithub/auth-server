@@ -16,6 +16,7 @@ export interface IUserService extends IService<UserDto>
     findOneByEmail(email: string): Promise<UserDto>;
     findActiveOne(userName: string): Promise<UserDto>;
     SetActiveByEmail(email: string): Promise<any>;
+    findOneByCustomerId(customerId: number): Promise<UserDto>;
 }
 
 @Injectable()
@@ -27,6 +28,11 @@ export class UserService extends BaseService<User, UserDto> implements IUserServ
     {
         super(repository, mapper);
         this.customerService=customerService;
+    }
+    public async findOneByCustomerId(customerId: number): Promise<UserDto> {
+        const user: User = await this.repository.findOne({ where: { customerId: customerId, active: true } });
+
+        return this.MapDto(user);
     }
 
     public async findOne(userName: string): Promise<UserDto>
@@ -95,7 +101,7 @@ export class UserService extends BaseService<User, UserDto> implements IUserServ
     public onBeforeInsert(dto: UserDto): User
     {
         const user: User = this.mapper.map(dto, User, UserDto);
-        
+
         user.id = 0;
         user.active = false;
         user.customerId = dto.customerId;

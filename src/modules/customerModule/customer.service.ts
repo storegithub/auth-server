@@ -10,6 +10,7 @@ import { InjectMapper, AutoMapper } from "nestjsx-automapper";
 export interface ICustomerService extends IService<CustomerDto>
 {
     checkCustomer({email, series, number}: ValidateCustomerDto) : Promise<boolean>;
+    checkUser({email, series, number}: ValidateCustomerDto) : Promise<CustomerDto>;
     getByEmail(email: string): Promise<CustomerDto>;
 }
 
@@ -32,6 +33,20 @@ export class CustomerService extends BaseService<Customer, CustomerDto> implemen
         catch(err)
         {
             return false;
+        } 
+    }
+
+    public async checkUser({email, series, number}: ValidateCustomerDto) : Promise<CustomerDto>
+    {
+        try
+        {
+            const value: Customer = await this.repository.findOne({where : {email: email, series: series, number: number}});
+            if(value == null) throw new Error(); 
+            return value;
+        }
+        catch(err)
+        {
+            return null;
         } 
     }
 

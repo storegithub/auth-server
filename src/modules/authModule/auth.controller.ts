@@ -13,6 +13,9 @@ import { SelectItem } from 'src/models/selectitem';
 import { CodeConfirmation } from 'src/models/codeconfirmation';
 import { IProfile, Profile } from 'src/models/profile.dto';
 import { ICode } from 'src/models/send.code';
+import { CustomerDto } from 'src/models/customer.dto';
+import { IUserService } from '../userModule/user.service';
+import { IChangePassword } from 'src/models/changePassword.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -21,9 +24,11 @@ export class AuthController {
     private readonly customerService: ICustomerService;
     private readonly emailLoggerService: IEmailLogService;
     private readonly notificationService: NotificationService;
+    private readonly userService: IUserService;
 
     constructor(@Inject("IAuthService") authService: IAuthService, 
         @Inject("ICustomerService") customerService: ICustomerService,
+        @Inject("IUserService") userService: IUserService,
         @Inject("IEmailLogService") emailLoggerService: IEmailLogService,
         notificationService: NotificationService)
     {
@@ -31,6 +36,7 @@ export class AuthController {
         this.customerService=customerService;
         this.emailLoggerService = emailLoggerService;
         this.notificationService = notificationService;
+        this.userService = userService;
     }
 
     @Get()
@@ -128,5 +134,82 @@ export class AuthController {
     public async validateAccount(@Param('data') data: string)
     {
         return await this.authService.validateAccount(data);
+    }
+
+    @Post('/checkUser')
+    public async checkUser(@Body(ValidationPipe) data: ValidateCustomerDto) : Promise<CodeConfirmation>
+    {
+        try
+        {
+            const customer: CustomerDto = await this.customerService.checkUser(data); 
+            if(customer == null) throw new Error();
+            
+            const userDto: UserDto = await this.userService.findOneByCustomerId(customer.id); 
+            if(userDto == null ) throw new Error();
+
+            return new CodeConfirmation(true, "ok", null, 60);
+        }
+        catch(err)
+        {
+            return new CodeConfirmation(false, err.message, null, -1);
+        }
+    }
+
+    @Post('/changePassword')
+    public async changePassword(@Body() model: IChangePassword)
+    {
+        try
+        { 
+            if(model.password != model.password) throw new Error();
+
+            const customer: CustomerDto = await this.customerService.checkUser({ email: model.email, number: model.number, series: model.series }); 
+            if(customer == null) throw new Error();
+            
+            const userDto: UserDto = await this.userService.findOneByCustomerId(customer.id); 
+            if(userDto == null ) throw new Error();
+            
+            userDto.password = this.authService.hashPassword(model.password, userDto.userName);
+            userDto.active = false;
+
+            await this.userService.update(userDto);
+
+            const buffer: SelectItem<string, string>[] = [];
+            const codeItem: SelectItem<string, string> = new SelectItem<string, string>();
+            codeItem.value = 'model.code';  
+            codeItem.text = await this.emailLoggerService.generateGuid("change.password", model.email);          
+            buffer.push(codeItem);
+
+            await this.notificationService.sendChangePassword(userDto, buffer);
+
+            return new CodeConfirmation(true, "ok", null, 60);
+        }
+        catch(err)
+        {
+            return new CodeConfirmation(false, err.message, null, -1);
+        } 
+    }
+
+    @Post('/resetPasswordCode')
+    public async resetPasswordCode(@Body() model: ICode)
+    {
+        try
+        { 
+            const userDto: UserDto = new UserDto();
+            userDto.email = model.email; 
+
+            const buffer: SelectItem<string, string>[] = [];
+            const codeItem: SelectItem<string, string> = new SelectItem<string, string>();
+            codeItem.value = 'model.code';  
+            codeItem.text = await this.emailLoggerService.generateCode("reset.password.code", model.email);          
+            buffer.push(codeItem);
+
+            await this.notificationService.sendCode(userDto, buffer);
+
+            return new CodeConfirmation(true, "ok", null, 60);
+        }
+        catch(err)
+        {
+            return new CodeConfirmation(false, err.message, null, -1);
+        } 
     }
 }

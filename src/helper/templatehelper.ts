@@ -62,7 +62,7 @@ export class TemplateHelper
             <div class="body-container">
                 <div class="row email-label">
                 <div class="col-sm-4 col-md-4"><b></b> Pentru resetare parola accesati link-ul:</div>
-                <div class="col-sm-4 col-md-4">{{model.code}}</div>
+                <div class="col-sm-4 col-md-4">http://localhost:3002/auth/validateaccount/{{model.code}}</div>
                 <div class="col-sm-4 col-md-4"></div>
                 </div>
             </div>
